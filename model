@@ -1,0 +1,17 @@
+from singa import device
+# sys.path.append(os.path.join(os.path.dirname(__file__), '../../build/python'))
+from singa import layer
+from singa import optimizer
+
+data = open('data/cleaningdata.txt')
+# SGD with L2 gradient normalization
+opt = optimizer.RMSProp(constraint=optimizer.L2Constraint(5))
+cuda = device.create_cuda_gpu()
+encoder = layer.LSTM(name='lstm', hidden_size=32, num_stacks=1, dropout=0.5, input_sample_shape=(data.vocab_size,))
+decoder = layer.LSTM(name='lstm', hidden_size=32, num_stacks=1, dropout=0.5, input_sample_shape=(data.vocab_size,))
+encoder.to_device(cuda)
+decoder.to_device(cude)
+encoder_w = encoder.param_values()[0]
+encoder_w.uniform(-0.08, 0.08)
+decoder_w = encoder.param_values()[0]
+decoder_w.uniform(-0.08, 0.08)

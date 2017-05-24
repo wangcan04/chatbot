@@ -12,15 +12,6 @@ limit = {
     'mina': 3
 }
 
-UNK = 'unk'
-VOCAB_SIZE = 6000
-
-import itertools
-import pickle
-
-import nltk
-import numpy as np
-
 
 def ddefault():
     return 1
@@ -65,21 +56,26 @@ def filter_line(line, whitelist):
 
 
 def filter_data(sequences):
-    filtered_q, filtered_a = [], []
+    filtered_q, filtered_a,filteredal = [], [], []
     raw_data_len = len(sequences) // 2
 
     for i in range(0, len(sequences), 2):
         qlen, alen = len(sequences[i].split(' ')), len(sequences[i + 1].split(' '))
         if qlen >= limit['minq'] and qlen <= limit['maxq']:
             if alen >= limit['mina'] and alen <= limit['maxa']:
+                end =' EOS'
+                sta ='GO '
+                sequences[i+1] = sta+sequences[i+1]+end
+                filteredal.append(sequences[i])
+                filteredal.append(sequences[i+1])
                 filtered_q.append(sequences[i])
-                filtered_a.append(sequences[i + 1])
+                filtered_a.append(sequences[i+1])
 
     # print the fraction of the original data, filtered
     filt_data_len = len(filtered_q)
     filtered = (raw_data_len - filt_data_len) * 100 / raw_data_len
     print(str(filtered) + '% filtered from original data')
-    return filtered_q, filtered_a
+    return filtered_q, filtered_a, filteredal
 
 
 
@@ -98,17 +94,17 @@ def process_data():
     print('\n>> Filter lines')
     lines = [filter_line(line, EN_WHITELIST) for line in lines]
     print(lines[121:125])
-    file = open('dataclean.txt', 'wb')
-    file.write(str(lines));
-    file.close()
     # filter out too long or too short sequences
     print('\n>> 2nd layer of filtering')
-    qlines, alines = filter_data(lines)
+    qlines, alines, alllines = filter_data(lines)
     file=open('dataq.txt','w')
-    file.write(str(qlines));
+    file.write('\n'.join(str(num) for num in qlines))
     file.close()
     file=open('dataa.txt','w')
-    file.write(str(alines));
+    file.write('\n'.join(str(num) for num in alines))
+    file.close()
+    file=open('dataclean.txt','w')
+    file.write('\n'.join(str(num) for num in alllines))
     file.close()
 if __name__ == '__main__':
     process_data()

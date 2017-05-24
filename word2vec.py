@@ -47,20 +47,15 @@ def answer2vec(i):
     vec = np.array(vec)
     return vec
 
-def numpy2tensors(npx,npy,dev):
+def numpy2tensors(numpy,dev):
     '''batch, seq, dim -- > seq, batch, dim'''
-    tmpx = np.swapaxes(npx, 0, 1)
-    tmpy = np.swapaxes(npy, 0, 1)
+    numpy = np.swapaxes(numpy, 0, 1)
     inputs = []
-    labels = []
-    for t in range(tmpx.shape[0]):
-        x = tensor.from_numpy(tmpx[t])
-        y = tensor.from_numpy(tmpy[t])
-        x.to_device(dev)
-        y.to_device(dev)
-        inputs.append(x)
-        labels.append(y)
-    return inputs, labels
+    for t in range(numpy.shape[0]):
+        num = tensor.from_numpy(numpy[t])
+        num.to_device(dev)
+        inputs.append(num)
+    return inputs
 
 if __name__ == '__main__':
     word2vec()

@@ -57,6 +57,14 @@ def numpy2tensors(numpy,dev):
         inputs.append(num)
     return inputs
 
+def convert(batch,batch_size,seq_length,vocab_size, dev):
+    x=np.zeros((batch_size, seq_length, vocab_size), dtype=np.float32)
+    for b in range(batch_size):
+        for t in range(seq_length):
+            c=batch[b,t]
+            x[b,t,c]=1
+    return numpy2tensors(x,dev)
+
 if __name__ == '__main__':
     word2vec()
 

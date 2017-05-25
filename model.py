@@ -35,10 +35,10 @@ batch_size=40
 train_loss = 0
 maxlength=20
 for epoch in range(20):
-    inputbatch = []
-    labelbatch=[]
     bar = range(50)
     for b in bar:
+        inputbatch = []
+        labelbatch=[]
         for i in range(b*batch_size,(b+1)*batch_size):
              inputbatch.append(question2vec(i,maxlength))
         inputbatch=np.array(inputbatch)

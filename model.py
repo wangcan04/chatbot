@@ -31,19 +31,19 @@ decoder_w = decoder.param_values()[0]
 decoder_w.uniform(-0.08, 0.08)
 
 lossfun = loss.SoftmaxCrossEntropy()
-batch_size=20
-seq_length=20
+batch_size=40
 train_loss = 0
-max=20
-for epoch in range(50):
+maxlength=20
+for epoch in range(20):
     inputbatch = []
     labelbatch=[]
-    bar = tnrange(50000, desc='Epoch %d' % 0)
+    bar = range(50)
     for b in bar:
         for i in range(b*batch_size,(b+1)*batch_size):
-             inputbatch.append(question2vec(i,max))
+             inputbatch.append(question2vec(i,maxlength))
         inputbatch=np.array(inputbatch)
-        inputs= numpy2tensors(inputbatch,dev=device.create_cuda_gpu())
+        inputs= numpy2tensors(inputbatch,dev=device.get_default_device())
         for i in range(b*batch_size,(b+1)*batch_size):
-             labelbatch.append(question2vec(i,max))
+             labelbatch.append(question2vec(i,maxlength))
         labelbatch=np.array(labelbatch)
+        labels= numpy2tensors(labelbatch,dev=device.get_default_device())

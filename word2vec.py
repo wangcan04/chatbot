@@ -54,7 +54,6 @@ def answer2vec(i,max):
 
 def numpy2tensors(numpy,dev):
     x = np.swapaxes(numpy, 0, 1)
-    print x.shape
     inputs = []
     for t in range(x.shape[0]):
         num = tensor.from_numpy(x[t])

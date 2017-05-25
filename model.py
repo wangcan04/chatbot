@@ -43,7 +43,11 @@ for epoch in range(20):
              inputbatch.append(question2vec(i,maxlength))
         inputbatch=np.array(inputbatch)
         inputs= numpy2tensors(inputbatch,dev=device.get_default_device())
+        inputs.append(tensor.Tensor())
+        inputs.append(tensor.Tensor())
         for i in range(b*batch_size,(b+1)*batch_size):
              labelbatch.append(question2vec(i,maxlength))
         labelbatch=np.array(labelbatch)
         labels= numpy2tensors(labelbatch,dev=device.get_default_device())
+        labels.append(tensor.Tensor())
+        labels.append(tensor.Tensor())

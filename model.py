@@ -59,8 +59,10 @@ for epoch in range(1):
         batch_loss=0
         for i in range(len(act)):
             lvalue=lossfun.forward(model_pb2.kTrain,act[i],labels[i])
-            batch_loss+=lvalue.l1()
-            print batch_loss
+            if np.isnan(lvalue.l1()):
+               batch_loss +=0
+            else:
+               batch_loss += lvalue.l1()
             grad=lossfun.backward()
             grad/=batch_size
             grads.append(grad)

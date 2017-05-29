@@ -31,13 +31,14 @@ decoder_w = decoder.param_values()[0]
 decoder_w.uniform(-0.08, 0.08)
 
 lossfun = loss.SoftmaxCrossEntropy()
-batch_size=40
+batch_size=50
 train_loss = 0
-maxlength=20
-for epoch in range(20):
-    bar = range(50)
+maxlength=23
+num_train_batch=5000
+for epoch in range(1):
+    bar = range(num_train_batch)
     for b in bar:
-        inputbatch = []
+        inputbatch=[]
         labelbatch=[]
         for i in range(b*batch_size,(b+1)*batch_size):
              inputbatch.append(question2vec(i,maxlength))
@@ -49,5 +50,24 @@ for epoch in range(20):
              labelbatch.append(question2vec(i,maxlength))
         labelbatch=np.array(labelbatch)
         labels= numpy2tensors(labelbatch,dev=cuda)
-        labels.append(tensor.Tensor())
-        labels.append(tensor.Tensor())
+        outputs = encoder.forward(model_pb2.kTrain, inputs)[-2:]
+        inputs2=labels[0:-1]
+        inputs2.extend(outputs)
+        act = decoder.forward(model_pb2.kTrain, inputs2)[0:-2]
+        labels=labels[1:]
+        grads=[]
+        batch_loss=0
+        for i in range(len(act)):
+            lvalue=lossfun.forward(model_pb2.kTrain,act[i],labels[i])
+            batch_loss+=lvalue.l1()
+            print batch_loss
+            grad=lossfun.backward()
+            grad/=batch_size
+            grads.append(grad)
+        train_loss+=batch_loss
+        grads.append(tensor.Tensor())
+        grads.append(tensor.Tensor())
+        g_rnn_w = decoder.backward(model_pb2.kTrain, grads)[1][0]
+        opt.apply_with_lr(epoch, get_lr(epoch), g_rnn_w,decoder_w,'decoderw')
+    print '\nEpoch %d, train loss is %f' % (epoch, train_loss /num_train_batch / maxlength)
+           

@@ -1,7 +1,7 @@
 EN_WHITELIST = '0123456789abcdefghijklmnopqrstuvwxyz '  # space is included in whitelist
 EN_BLACKLIST = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~\''
 
-FILENAME = 'data/chat.txt'
+FILENAME = 'twitter_en.txt'
 
 limit = {
     'maxq': 20,
@@ -11,7 +11,7 @@ limit = {
 }
 
 UNK = 'unk'
-VOCAB_SIZE = 6000
+VOCAB_SIZE = 6998
 
 import random
 import sys
@@ -76,6 +76,7 @@ def index_(tokenized_sentences, vocab_size):
     index2word = ['_'] + [UNK] + [x[0] for x in vocab]
     # word2index
     word2index = dict([(w, i) for i, w in enumerate(index2word)])
+    print len(index2word),len(word2index)
     return index2word, word2index, freq_dist
 
 
@@ -132,8 +133,6 @@ def zero_pad(qtokenized, atokenized, w2idx):
         idx_a[i] = np.array(a_indices)
 
     return idx_q, idx_a
-
-
 '''
  replace words with indices in a sequence
   replace with unknown if word not in lookup
@@ -160,7 +159,6 @@ def process_data():
 
     print('\n:: Sample from read(p) lines')
     print(lines[121:125])
-
     # filter out unnecessary characters
     print('\n>> Filter lines')
     lines = [filter_line(line, EN_WHITELIST) for line in lines]
@@ -183,7 +181,6 @@ def process_data():
     # indexing -> idx2w, w2idx : en/ta
     print('\n >> Index words')
     idx2w, w2idx, freq_dist = index_(qtokenized + atokenized, vocab_size=VOCAB_SIZE)
-
     print('\n >> Zero Padding')
     idx_q, idx_a = zero_pad(qtokenized, atokenized, w2idx)
     print('\nq : {0} ; a : {1}'.format(idx_q[59], idx_a[59]))

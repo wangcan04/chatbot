@@ -21,16 +21,13 @@ def numpy2tensors(num, dev):
         x.to_device(dev)
         inputs.append(x)
     return inputs
-def convert(batch, dev):
+def labelconvert(batch,dev):
+    return numpy2tensors(batch,dev)
+def convert(batch, batch_size, seq_length, vocab_size, dev):
     '''convert a batch of data into a sequence of input tensors'''
-    return numpy2tensors(batch, dev)
-def labelconvert(batch, batch_size, seq_length, vocab_size, dev):
-    x1 = batch[:, :seq_length]
     x = np.zeros((batch_size, seq_length, vocab_size), dtype=np.float32)
     for b in range(batch_size):
         for t in range(seq_length):
-            c = x1[b, t]
+            c = batch[b, t]
             x[b, t, c] = 1
-    return numpy2tensors(x, dev)
-if __name__ == '__main__':
-    metadata, idx_q, idx_a=load_data()
+    return numpy2tensors(x,dev)

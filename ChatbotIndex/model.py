@@ -43,8 +43,6 @@ if __name__ == "__main__":
         #g_encoder_w.set_value(0.0)
         g_dense_w = tensor.Tensor(dense_w.shape, cuda)
         g_dense_b = tensor.Tensor(dense_b.shape, cuda)
-        g_dense_w.set_value(0.0)
-        g_dense_b.set_value(0.0)
 
         lossfun = loss.SoftmaxCrossEntropy()
         batch_size=50
@@ -72,6 +70,8 @@ if __name__ == "__main__":
                         #print 'gt:', len(labels), labels[0].shape
                         grads=[]
                         batch_loss=0
+                        g_dense_w.set_value(0.0)
+                        g_dense_b.set_value(0.0)
                         outputs2 = decoder.forward(model_pb2.kTrain, inputs2)[0:-2]
                         #print 'output from labeled data:', len(outputs2), outputs2[0].shape
                         for output,label in zip(outputs2,labels):
@@ -103,3 +103,17 @@ if __name__ == "__main__":
                         g_dense_w.set_value(0.0)
                         g_dense_b.set_value(0.0)
                 print '\nEpoch %d, train loss is %f' % (epoch, train_loss /num_train_batch / maxlength)
+                with open('%d_model64single.bin'%(epoch),'wb')as fd:
+                  if epoch%10==0:
+                    print 'saving model'
+                    d={}
+                    for name, w in zip(['encoder_w','decoder_w', 'dense_w', 'dense_b'],[encoder_w,decoder_w, dense_w, dense_b]):
+                        d[name] = tensor.to_numpy(w)
+                    d['hidden_size'] = 64
+                    d['num_stacks'] = 1
+                    d['dropout'] = 0.5
+                    pickle.dump(d, fd)
+                  else:
+                    print 'it is just a test model'
+        np.savetxt("batchresult3.txt", batchlosslist);
+        np.savetxt("trainresult3.txt", trainlosslist);

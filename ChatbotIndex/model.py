@@ -104,16 +104,13 @@ if __name__ == "__main__":
                         g_dense_b.set_value(0.0)
                 print '\nEpoch %d, train loss is %f' % (epoch, train_loss /num_train_batch / maxlength)
                 with open('%d_model64single.bin'%(epoch),'wb')as fd:
-                  if epoch%10==0:
                     print 'saving model'
                     d={}
                     for name, w in zip(['encoder_w','decoder_w', 'dense_w', 'dense_b'],[encoder_w,decoder_w, dense_w, dense_b]):
                         d[name] = tensor.to_numpy(w)
                     d['hidden_size'] = 64
-                    d['num_stacks'] = 1
+                    d['num_stacks'] = 5
                     d['dropout'] = 0.5
                     pickle.dump(d, fd)
-                  else:
-                    print 'it is just a test model'
         np.savetxt("batchresult3.txt", batchlosslist);
         np.savetxt("trainresult3.txt", trainlosslist);

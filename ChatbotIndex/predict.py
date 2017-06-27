@@ -39,3 +39,24 @@ if __name__ == "__main__":
         dense.to_device(cuda)
         dense.param_values()[0].copy_from_numpy(densew,offset=0)
         dense.param_values()[1].copy_from_numpy(denseb,offset=0)
+                metadata,idx_q,idx_a=load_data()
+        batchq=idx_q[300:301]
+        inputs=convert(batchq,1,20,vocab_size,cuda)
+        inputs.append(tensor.Tensor())
+        inputs.append(tensor.Tensor())
+        outputs = encoder.forward(model_pb2.kTrain, inputs)[-2:]
+
+        start = np.zeros((1,1,7000),dtype=np.float32)
+        start[0,0,3] = 1
+        print start
+        result = numpy2tensors(start,cuda)
+        result.extend(outputs)
+        result=decoder.forward(model_pb2.kTrain,result)
+        words = result[:-2]
+        state = result[-2:]
+        for word in words:
+            nextword = dense.forward(model_pb2.kTrain,word)
+        nextw = tensor.to_numpy(nextword)
+        a=nextw.argmax()
+        print a,nextw
+

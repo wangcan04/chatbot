@@ -16,6 +16,19 @@ from word2tensor import load_data,numpy2tensors,convert,labelconvert
 import preprocess
 import time
 
+def softmax(x):
+ """Compute softmax values for each sets of scores in x."""
+ """Compute softmax values for each sets of scores in x."""
+ return np.exp(x) / np.sum(np.exp(x), axis=0)
+
+def seq2word(x,dic):
+    datalen=len(x)
+    sen = []
+    for i in range(datalen):
+        a=x[i]
+        sen.append(dic[a])
+    return sen
+
 if __name__ == "__main__":
         model_file = open('71.bin', 'rb')
         param = pickle.load(model_file)
@@ -39,8 +52,10 @@ if __name__ == "__main__":
         dense.to_device(cuda)
         dense.param_values()[0].copy_from_numpy(densew,offset=0)
         dense.param_values()[1].copy_from_numpy(denseb,offset=0)
-                metadata,idx_q,idx_a=load_data()
+        
+        
         metadata,idx_q,idx_a=load_data()
+        idx2w=metadata['idx2w']
         batchq=idx_q[300:301]
         inputs=convert(batchq,1,20,vocab_size,cuda)
         inputs.append(tensor.Tensor())
@@ -54,21 +69,21 @@ if __name__ == "__main__":
         start=decoder.forward(model_pb2.kTrain,start)
         words = start[:-2]
         state = start[-2:]
-        word = words[0]
         wlist=[]
-        for i in range(22) :
-            nextword = dense.forward(model_pb2.kTrain,word)
-            nextw = tensor.to_numpy(nextword)
-            wordvec = softmax(nextw[0])
-            loca = np.argmax(wordvec)
-            nword = np.zeros((1,1,7000),dtype=np.float32)
-            nword[0,0,loca]= 1
-            nword = numpy2tensors(nword,cuda)
-            nword.extend(state)
-            print nword
-            result = decoder.forward(model_pb2.kTrain,nword)
-            print result
-            word = result[:-2]
-            state = result[-2:]
-            wlist.append(loca)
+        for i in range(20):
+          nextword = dense.forward(model_pb2.kEval,word)
+          nextw = tensor.to_numpy(nextword)
+          wordvec = softmax(nextw[0])
+          loca = np.argmax(wordvec)
+          nword = np.zeros((1,1,7000),dtype=np.float32)
+          nword[0,0,loca]= 1
+          nword = numpy2tensors(nword,cuda)
+          nword.extend(state)
+          result = decoder.forward(model_pb2.kEval,nword)
+          word = result[:-2][0]
+          state = result[-2:]
+          wlist.append(loca)
+        print wlist
+        print idx2w[700]
+        print seq2word(wlist,idx2w)
 

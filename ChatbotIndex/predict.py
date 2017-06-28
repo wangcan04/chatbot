@@ -49,16 +49,26 @@ if __name__ == "__main__":
 
         start = np.zeros((1,1,7000),dtype=np.float32)
         start[0,0,3] = 1
-        print start
-        result = numpy2tensors(start,cuda)
-        result.extend(outputs)
-        result=decoder.forward(model_pb2.kTrain,result)
-        words = result[:-2]
-        state = result[-2:]
-        for word in words:
+        start = numpy2tensors(start,cuda)
+        start.extend(outputs)
+        start=decoder.forward(model_pb2.kTrain,start)
+        words = start[:-2]
+        state = start[-2:]
+        word = words[0]
+        wlist=[]
+        for i in range(22) :
             nextword = dense.forward(model_pb2.kTrain,word)
-        nextw = tensor.to_numpy(nextword)
-        print max(nextw[0]),min(nextw[0])
-        a = softmax(nextw[0])
-        print max(a)
+            nextw = tensor.to_numpy(nextword)
+            wordvec = softmax(nextw[0])
+            loca = np.argmax(wordvec)
+            nword = np.zeros((1,1,7000),dtype=np.float32)
+            nword[0,0,loca]= 1
+            nword = numpy2tensors(nword,cuda)
+            nword.extend(state)
+            print nword
+            result = decoder.forward(model_pb2.kTrain,nword)
+            print result
+            word = result[:-2]
+            state = result[-2:]
+            wlist.append(loca)
 

@@ -40,6 +40,7 @@ if __name__ == "__main__":
         dense.param_values()[0].copy_from_numpy(densew,offset=0)
         dense.param_values()[1].copy_from_numpy(denseb,offset=0)
                 metadata,idx_q,idx_a=load_data()
+        metadata,idx_q,idx_a=load_data()
         batchq=idx_q[300:301]
         inputs=convert(batchq,1,20,vocab_size,cuda)
         inputs.append(tensor.Tensor())
@@ -57,6 +58,7 @@ if __name__ == "__main__":
         for word in words:
             nextword = dense.forward(model_pb2.kTrain,word)
         nextw = tensor.to_numpy(nextword)
-        a=nextw.argmax()
-        print a,nextw
+        print max(nextw[0]),min(nextw[0])
+        a = softmax(nextw[0])
+        print max(a)
 

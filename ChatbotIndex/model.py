@@ -98,10 +98,6 @@ if __name__ == "__main__":
                         #opt.apply_with_lr(epoch, 0.0, g_encoder_w, encoder_w,'encoderw')
                         opt.apply_with_lr(epoch, get_lr(epoch), g_dense_w, dense_w, 'dense_w')
                         opt.apply_with_lr(epoch, get_lr(epoch), g_dense_b, dense_b, 'dense_b')
-
-                        #time.sleep(0.2)
-                        g_dense_w.set_value(0.0)
-                        g_dense_b.set_value(0.0)
                 trainlosslist[epoch]=train_loss /num_train_batch / maxlength
                 print '\nEpoch %d, train loss is %f' % (epoch, train_loss /num_train_batch / maxlength)
                 with open('%d_model64single.bin'%(epoch),'wb')as fd:

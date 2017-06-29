@@ -50,7 +50,7 @@ if __name__ == "__main__":
         num_train_batch=5000
         num_epoch=5
         metadata, idx_q, idx_a=load_data()
-        print idx_q.shape, idx_a.shape
+        trainlosslist=np.zeros(num_epoch)
         for epoch in range(num_epoch):
                 train_loss = 0
                 bar =range(num_train_batch)
@@ -102,6 +102,7 @@ if __name__ == "__main__":
                         #time.sleep(0.2)
                         g_dense_w.set_value(0.0)
                         g_dense_b.set_value(0.0)
+                trainlosslist[epoch]=train_loss /num_train_batch / maxlength
                 print '\nEpoch %d, train loss is %f' % (epoch, train_loss /num_train_batch / maxlength)
                 with open('%d_model64single.bin'%(epoch),'wb')as fd:
                     print 'saving model'

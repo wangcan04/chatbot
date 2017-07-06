@@ -11,65 +11,115 @@ from singa import optimizer
 from singa import initializer
 from singa.proto import model_pb2
 from tqdm import tnrange
-from word2vector import numpy2tensors,answer2vec,question2vec
+from word2tensor import load_data,numpy2tensors,labelconvert,answer2vec,question2vec
 
-
+import time
 
 def get_lr(epoch):
-    return 0.001 / float(1 << (epoch / 50))
+        return 0.001 / float(1 << (epoch / 5))
 
-# SGD with L2 gradient normalization
-opt = optimizer.RMSProp(constraint=optimizer.L2Constraint(5))
-cuda = device.get_default_device()
-encoder = layer.LSTM(name='lstm', hidden_size=32, num_stacks=1, dropout=0.5, input_sample_shape=(100,))
-decoder = layer.LSTM(name='lstm', hidden_size=32, num_stacks=1, dropout=0.5, input_sample_shape=(100,))
-encoder.to_device(cuda)
-decoder.to_device(cuda)
-encoder_w = encoder.param_values()[0]
-encoder_w.uniform(-0.08, 0.08)
-decoder_w = decoder.param_values()[0]
-decoder_w.uniform(-0.08, 0.08)
+if __name__ == "__main__":
+        # SGD with L2 gradient normalization 
+        vocab_size=10000
+        word_dim=256
+        opt = optimizer.RMSProp(constraint=optimizer.L2Constraint(5))
+        cuda = device.create_cuda_gpu_on(1)
+        encoder = layer.LSTM(name='lstm1', hidden_size=128, num_stacks=2, dropout=0.5, input_sample_shape=(word_dim,))
+        decoder = layer.LSTM(name='lstm2', hidden_size=128, num_stacks=2, dropout=0.5, input_sample_shape=(word_dim,))
+        encoder.to_device(cuda)
+        decoder.to_device(cuda)
+        encoder_w = encoder.param_values()[0]
+        encoder_w.uniform(-0.08, 0.08)
+        decoder_w = decoder.param_values()[0]
+        decoder_w.uniform(-0.08, 0.08)
 
-lossfun = loss.SoftmaxCrossEntropy()
-batch_size=50
-train_loss = 0
-maxlength=23
-num_train_batch=5000
-for epoch in range(1):
-    bar = range(num_train_batch)
-    for b in bar:
-        inputbatch=[]
-        labelbatch=[]
-        for i in range(b*batch_size,(b+1)*batch_size):
-             inputbatch.append(question2vec(i,maxlength))
-        inputbatch=np.array(inputbatch)
-        inputs= numpy2tensors(inputbatch,dev=cuda)
-        inputs.append(tensor.Tensor())
-        inputs.append(tensor.Tensor())
-        for i in range(b*batch_size,(b+1)*batch_size):
-             labelbatch.append(question2vec(i,maxlength))
-        labelbatch=np.array(labelbatch)
-        labels= numpy2tensors(labelbatch,dev=cuda)
-        outputs = encoder.forward(model_pb2.kTrain, inputs)[-2:]
-        inputs2=labels[0:-1]
-        inputs2.extend(outputs)
-        act = decoder.forward(model_pb2.kTrain, inputs2)[0:-2]
-        labels=labels[1:]
-        grads=[]
-        batch_loss=0
-        for i in range(len(act)):
-            lvalue=lossfun.forward(model_pb2.kTrain,act[i],labels[i])
-            if np.isnan(lvalue.l1()):
-               batch_loss +=0
-            else:
-               batch_loss += lvalue.l1()
-            grad=lossfun.backward()
-            grad/=batch_size
-            grads.append(grad)
-        train_loss+=batch_loss
-        grads.append(tensor.Tensor())
-        grads.append(tensor.Tensor())
-        g_rnn_w = decoder.backward(model_pb2.kTrain, grads)[1][0]
-        opt.apply_with_lr(epoch, get_lr(epoch), g_rnn_w,decoder_w,'decoderw')
-    print '\nEpoch %d, train loss is %f' % (epoch, train_loss /num_train_batch / maxlength)
-           
+        dense = layer.Dense('dense', vocab_size, input_sample_shape=(128,))
+        dense.to_device(cuda)
+        dense_w = dense.param_values()[0]
+        dense_b = dense.param_values()[1]
+        initializer.uniform(dense_w, dense_w.shape[0], 0)
+        dense_b.set_value(0)
+
+        #g_encoder_w = tensor.Tensor(encoder_w.shape, cuda)
+        #g_encoder_w.set_value(0.0)
+        g_dense_w = tensor.Tensor(dense_w.shape, cuda)
+        g_dense_b= tensor.Tensor(dense_b.shape, cuda)
+        '''
+        g_dense_w.set_value(0.0)
+        inlosslistg_dense_b.set_value(0.0)
+        '''
+        lossfun = loss.SoftmaxCrossEntropy()
+        batch_size=50
+        maxlength=22
+        num_train_batch=5000
+        metadata, idx_q, idx_a=load_data()
+        num_epoch=100
+        batchlosslist=np.zeros([num_epoch,num_train_batch])
+        trainlosslist=np.zeros(num_epoch)
+        ques = np.load('question_vec.npy')
+        ans = np.load('answer_vec.npy')
+        for epoch in range(num_epoch):
+                train_loss = 0
+                bar =range(num_train_batch)
+                for b in range (num_train_batch):
+                        inputbatch=ques[b * batch_size: (b + 1) * batch_size]
+                        print inputbatch.shape
+                        inputs= numpy2tensors(inputbatch,dev=cuda)
+                        inputs.append(tensor.Tensor())
+                        inputs.append(tensor.Tensor())
+                        batcha=idx_a[b * batch_size: (b + 1) * batch_size]
+                        outputs = encoder.forward(model_pb2.kTrain, inputs)[-2:]
+                        #print 'output for origin input:', len(outputs), outputs[0].shape, outputs[1].shape
+                        inputs2batch=ans[b * batch_size: (b + 1) * batch_size]
+                        print inputs2batch.shape
+                        inputs2batch = numpy2tensors(inputs2batch,dev=cuda)
+                        inputs2batch = inputs2batch[:-1]
+                        inputs2batch.extend(outputs)
+                        #print len(inputs2), inputs2[-2].shape, inputs2[-1].shape
+                        labels=labelconvert(batcha,cuda)[1:]
+                        #print 'gt:', len(labels), labels[0].shape
+                        grads=[]
+                        batch_loss=0
+                        g_dense_w.set_value(0.0)
+                        g_dense_b.set_value(0.0)
+                        outputs2 = decoder.forward(model_pb2.kTrain, inputs2batch)[0:-2]
+                        #print 'output from labeled data:', len(outputs2), outputs2[0].shape
+                        for output,label in zip(outputs2,labels):
+                                act=dense.forward(model_pb2.kTrain, output)
+                                lvalue=lossfun.forward(model_pb2.kTrain,act,label)
+                                batch_loss += lvalue.l1()
+                                grad=lossfun.backward()
+                                grad/=batch_size
+                                grad,gwb=dense.backward(model_pb2.kTrain,grad)
+                                grads.append(grad)
+                                g_dense_w += gwb[0]
+                                g_dense_b += gwb[1]
+                        batchlosslist[epoch][b]=batch_loss/maxlength
+                        train_loss += batch_loss
+
+                        print '\nbatch %d loss is %f' % (b,batch_loss / maxlength)
+                        grads.append(tensor.Tensor())
+                        grads.append(tensor.Tensor())
+                        g_decoder_w = decoder.backward(model_pb2.kTrain, grads)[1][0]
+                        g_encoder_w = encoder.backward(model_pb2.kTrain, grads[:-1])[1][0]
+
+                        dense_w, dense_b = dense.param_values()
+                        opt.apply_with_lr(epoch, get_lr(epoch), g_decoder_w, decoder_w,'decoderw')
+                        #opt.apply_with_lr(epoch, 0.0, g_encoder_w, encoder_w,'encoderw')
+                        opt.apply_with_lr(epoch, get_lr(epoch), g_dense_w, dense_w, 'dense_w')
+                        opt.apply_with_lr(epoch, get_lr(epoch), g_dense_b, dense_b, 'dense_b')
+
+                        #time.sleep(0.2)
+                trainlosslist[epoch]=train_loss /num_train_batch / maxlength
+                print '\nEpoch %d, train loss is %f' % (epoch, train_loss /num_train_batch / maxlength)
+                with open('%d_trainingmodel128.bin'%(epoch),'wb')as fd:
+                    print 'saving model'
+                    d={}
+                    for name, w in zip(['encoder_w','decoder_w', 'dense_w', 'dense_b'],[encoder_w,decoder_w, dense_w, dense_b]):
+                        d[name] = tensor.to_numpy(w)
+                    d['hidden_size'] = 128
+                    d['num_stacks'] = 2
+                    d['dropout'] = 0.5
+                    pickle.dump(d, fd)
+
+        np.savetxt("trainresult128.txt", trainlosslist);

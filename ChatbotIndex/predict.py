@@ -18,8 +18,8 @@ import time
 
 def softmax(x):
  """Compute softmax values for each sets of scores in x."""
- """Compute softmax values for each sets of scores in x."""
- return np.exp(x) / np.sum(np.exp(x), axis=0)
+    e_x = np.exp(x - np.max(x))
+    return e_x / e_x.sum()
 
 def seq2word(x,dic):
     datalen=len(x)
@@ -56,18 +56,19 @@ if __name__ == "__main__":
         
         metadata,idx_q,idx_a=load_data()
         idx2w=metadata['idx2w']
-        batchq=idx_q[300:301]
+        batchq=idx_q[555:556]
+        batcha=idx_a[555:556]
+
         inputs=convert(batchq,1,20,vocab_size,cuda)
         inputs.append(tensor.Tensor())
         inputs.append(tensor.Tensor())
-        outputs = encoder.forward(model_pb2.kTrain, inputs)[-2:]
-
+        outputs = encoder.forward(model_pb2.kEval, inputs)[-2:]
         start = np.zeros((1,1,7000),dtype=np.float32)
         start[0,0,3] = 1
         start = numpy2tensors(start,cuda)
         start.extend(outputs)
-        start=decoder.forward(model_pb2.kTrain,start)
-        words = start[:-2]
+        start=decoder.forward(model_pb2.kEval,start)
+        word = start[:-2][0]
         state = start[-2:]
         wlist=[]
         for i in range(20):
@@ -84,6 +85,5 @@ if __name__ == "__main__":
           state = result[-2:]
           wlist.append(loca)
         print wlist
-        print idx2w[700]
         print seq2word(wlist,idx2w)
-
+        print seq2word(batcha[0],idx2w)

@@ -76,7 +76,7 @@ class ChatbotModel(object):
 
             decoder_cell = rnn.MultiRNNCell([decoder_cell] * num_layers)
 
-            attention_mechanism=seq2seq.BahdanauAttention(num_units=hidden_size,memory=encoder_outputs)
+            #attention_mechanism=seq2seq.BahdanauAttention(num_units=hidden_size,memory=encoder_outputs)
 
         if decoder_mode:
             decoder = seq2seq.BeamSearchDecoder(embedding=embeddings,

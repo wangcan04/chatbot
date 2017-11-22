@@ -32,7 +32,7 @@ flags.DEFINE_string("tokenizer", "basic", "Choice of tokenizer, options are: bas
 flags.DEFINE_string("checkpoint_dir", "data/checkpoints/", "Checkpoint dir")
 flags.DEFINE_integer("max_train_data_size", 0,
   "Limit on the size of training data (0: no limit).")
-flags.DEFINE_integer("steps_per_checkpoint", 200,
+flags.DEFINE_integer("steps_per_checkpoint", 800,
   "How many training steps to do per checkpoint.")
 flags.DEFINE_integer("max_target_length", 50, "max length of target response")
 flags.DEFINE_integer("max_source_length", 75, "max length of source input")
@@ -59,6 +59,7 @@ def main():
   FLAGS.vocab_size = vocab_size
 
   last_test_loss = float('inf')
+  
   with tf.Session() as sess:
     model = create_model(sess, path, vocab_size)
     #train model and save to checkpoint

@@ -1,3 +1,14 @@
+'''
+Idea from tensorflow translation example:
+https://github.com/tensorflow/tensorflow/blob/e39d8feebb9666a331345cd8d960f5ade4652bba/tensorflow/models/rnn/translate/seq2seq_model.py
+
+And neural chatbot example:
+https://github.com/inikdom/neural-chatbot/blob/master/models/chatbot.py
+'''
+
+
+
+
 import random
 
 import numpy as np

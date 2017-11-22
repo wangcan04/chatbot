@@ -15,7 +15,6 @@ class ChatbotModel(object):
                  max_source_length, decoder_mode=False):
         '''
         vocab_size: number of vocab tokens
-        buckets: buckets of max sequence lengths
         hidden_size: dimension of hidden layers
         num_layers: number of hidden layers
         max_gradient_norm: maximum gradient magnitude

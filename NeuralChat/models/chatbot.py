@@ -51,7 +51,7 @@ class ChatbotModel(object):
 
             encoder_cell = rnn.MultiRNNCell([encoder_cell] * num_layers)
 
-            _, encoder_state = tf.nn.bidirectional_dynamic_rnn(cell_fw=encoder_cell,
+            encoder_outputs, encoder_state = tf.nn.bidirectional_dynamic_rnn(cell_fw=encoder_cell,
                                                                cell_bw=encoder_cell,
                                                                sequence_length=self.source_lengths,
                                                                inputs=encoder_inputs_embedded,
@@ -65,11 +65,7 @@ class ChatbotModel(object):
 
             decoder_cell = rnn.MultiRNNCell([decoder_cell] * num_layers)
 
-            #TODO add attention
-            #seq2seq.BahdanauAttention(num_units=,memory=encoder_output)
-
-            #decoder_cell = seq2seq.AttentionWrapper(cell=decoder_cell,
-            #                                        attention_mechanism=)
+            attention_mechanism=seq2seq.BahdanauAttention(num_units=hidden_size,memory=encoder_outputs)
 
         if decoder_mode:
             decoder = seq2seq.BeamSearchDecoder(embedding=embeddings,

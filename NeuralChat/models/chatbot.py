@@ -98,14 +98,14 @@ class ChatbotModel(object):
         if decoder_mode:
             beam_width=2
             batch_size=tf.shape(encoder_outputs)[0]
-            attn_zero=attn_cell.zero_state(batch_size=batch_size*beam_width,tf.float32)
+            attn_zero=attn_cell.zero_state(batch_size=(batch_size*beam_width), dtype=tf.float32)
             init_state=attn_zero.clone(cell_state=encoder_state)
             decoder = seq2seq.BeamSearchDecoder(cell=attn_cell,embedding=embeddings,
                                                 start_tokens=tf.tile([GO_ID], [1]),
                                                 end_token=EOS_ID,
                                                 initial_state=init_state,
-                                                beam_width=beam_width
-                                                output_layer = Dense(vocab_size))#BeamSearch in Decoder
+                                                beam_width=beam_width,
+                                                output_layer=Dense(vocab_size))#BeamSearch in Decoder
             final_outputs, final_state, final_sequence_lengths =\
                             seq2seq.dynamic_decode(decoder=decoder)
             self.logits = final_outputs.predicted_ids

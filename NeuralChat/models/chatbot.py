@@ -68,7 +68,7 @@ class ChatbotModel(object):
                                                                sequence_length=self.source_lengths,
                                                                inputs=encoder_inputs_embedded,
                                                                dtype=tf.float32,
-                                                               time_major=False)
+                                                               time_major=False) #BiLSTM encoder
             encoder_outputs = tf.concat(encoder_outputs,2)
         with tf.variable_scope('decoder') as scope:
             decoder_cell = rnn.LSTMCell(hidden_size)
@@ -95,7 +95,7 @@ class ChatbotModel(object):
                       attention_layer_size=hidden_size, #depth of attention ( output ) tensor
                       output_attention=False,
                       name='attention_wrapper'
-                      )
+                      )#attention layer
             batch_size=tf.shape(encoder_outputs)[0]
             attn_zero=attn_cell.zero_state(batch_size=batch_size,dtype=tf.float32)
             init_state=attn_zero.clone(cell_state=encoder_state)
@@ -104,7 +104,7 @@ class ChatbotModel(object):
                                                 start_tokens=tf.tile([GO_ID], [1]),
                                                 end_token=EOS_ID,
                                                 initial_state=encoder_state[-1],
-                                                beam_width=1)
+                                                beam_width=1)#BeamSearch in Decoder
             final_outputs, final_state, final_sequence_lengths =\
                             seq2seq.dynamic_decode(decoder=decoder)
             self.logits = final_outputs.predicted_ids
@@ -135,11 +135,11 @@ class ChatbotModel(object):
 
                 x_entropy_loss = seq2seq.sequence_loss(logits=self.logits,
                                                        targets=self.decoder_targets,
-                                                       weights=weights)
+                                                       weights=weights)#cross-entropy loss function
 
                 self.loss = tf.reduce_mean(x_entropy_loss)
 
-            optimizer = tf.train.AdamOptimizer()
+            optimizer = tf.train.AdamOptimizer()#Adam optimization algorithm
             gradients = optimizer.compute_gradients(x_entropy_loss)
             capped_grads = [(tf.clip_by_value(grad, -max_gradient_norm, max_gradient_norm), var) for grad, var in gradients]
             self.train_op = optimizer.apply_gradients(capped_grads,

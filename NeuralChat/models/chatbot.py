@@ -90,7 +90,7 @@ class ChatbotModel(object):
                       name='BahdanauAttentiion'
                       )
             attn_cell=seq2seq.AttentionWrapper(
-                      cell=deocder_cell, #same as encoder
+                      cell=decoder_cell, #same as encoder
                       attention_mechanism=attn_mech,
                       attention_size=hidden_size, #depth of attention ( output ) tensor
                       output_attention=False,

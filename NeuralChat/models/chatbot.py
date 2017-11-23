@@ -79,7 +79,7 @@ class ChatbotModel(object):
                       num_units=hidden_size,#depth of query mechanism
                       memory=encoder_outputs, #out of RNN hidden states
                       memory_sequence_length=None,
-                      Normalize=False,
+                      normalize=False,
                       name='BahdanauAttentiion'
                       )
             attn_cell=seq2seq.DynamicAttentionWrapper(

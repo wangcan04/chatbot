@@ -76,6 +76,7 @@ class ChatbotModel(object):
 
             decoder_cell = rnn.MultiRNNCell([decoder_cell] * num_layers)
 
+
             #TODO add attention
             #attention_mechanism= seq2seq.BahdanauAttention(num_units=hidden_size,memory=encoder_outputs)
 
@@ -91,34 +92,34 @@ class ChatbotModel(object):
             attn_cell=seq2seq.AttentionWrapper(
                       cell=decoder_cell, #same as encoder
                       attention_mechanism=attn_mech,
-                      attention_layer_size=hidden_size, #depth of attention ( output ) tensor
+                      attention_layer_size=hidden_size, #depth of attention tensor
                       output_attention=False,
                       name='attention_wrapper'
                       )#attention layer
         if decoder_mode:
             beam_width=2
-            batch_size=tf.shape(encoder_outputs)[0]
+            batch_size=100
             attn_zero=attn_cell.zero_state(batch_size=(batch_size*beam_width), dtype=tf.float32)
             init_state=attn_zero.clone(cell_state=encoder_state)
             decoder = seq2seq.BeamSearchDecoder(cell=attn_cell,embedding=embeddings,
                                                 start_tokens=tf.tile([GO_ID], [1]),
                                                 end_token=EOS_ID,
-                                                initial_state=init_state,
+                                                initial_state=init_state[-1],
                                                 beam_width=beam_width,
                                                 output_layer=Dense(vocab_size))#BeamSearch in Decoder
             final_outputs, final_state, final_sequence_lengths =\
                             seq2seq.dynamic_decode(decoder=decoder)
             self.logits = final_outputs.predicted_ids
         else:
-            batch_size=tf.shape(encoder_outputs)[0]
+            batch_size=100
             attn_zero=attn_cell.zero_state(batch_size=batch_size,dtype=tf.float32)
-            init_state=attn_zero.clone(cell_state=encoder_state)
+            init_state=attn_zero.clone(cell_state=encoder_state[-1])
             helper = seq2seq.TrainingHelper(inputs=targets_embedding,
                                             sequence_length=self.target_lengths)
-
+            
             decoder = seq2seq.BasicDecoder(cell=attn_cell,
                                            helper=helper,
-                                           initial_state=init_state,
+                                           initial_state=attn_cell.zero_state(batch_size,tf.float32).clone(cell_state=encoder_state[0]),
                                            output_layer=Dense(vocab_size))
             final_outputs, final_state, final_sequence_lengths =\
                             seq2seq.dynamic_decode(decoder=decoder)

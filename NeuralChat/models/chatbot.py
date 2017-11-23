@@ -26,6 +26,7 @@ class ChatbotModel(object):
                  max_source_length, decoder_mode=False):
         '''
         vocab_size: number of vocab tokens
+        buckets: buckets of max sequence lengths
         hidden_size: dimension of hidden layers
         num_layers: number of hidden layers
         max_gradient_norm: maximum gradient magnitude
@@ -75,6 +76,12 @@ class ChatbotModel(object):
                                               input_keep_prob=dropout)
 
             decoder_cell = rnn.MultiRNNCell([decoder_cell] * num_layers)
+
+            #TODO add attention
+            #attention_mechanism= seq2seq.BahdanauAttention(num_units=hidden_size,memory=encoder_outputs)
+
+            #decoder_cell = seq2seq.AttentionWrapper(cell=decoder_cell,
+            #                                        attention_mechanism=)
             attn_mech=seq2seq.BahdanauAttention(
                       num_units=hidden_size,#depth of query mechanism
                       memory=encoder_outputs, #out of RNN hidden states
@@ -92,14 +99,15 @@ class ChatbotModel(object):
             batch_size=tf.shape(encoder_outputs)[0]
             attn_zero=attn_cell.zero_state(batch_size=batch_size,dtype=tf.float32)
             init_state=attn_zero.clone(cell_state=encoder_state)
-
         if decoder_mode:
-            decoder = seq2seq.BeamSearchDecoder(cell=attn_cell,
-                                                embedding=embeddings,
-                                                start_tokens=tf.tile([GOD_ID], [batch_size]),
+            decoder = seq2seq.BeamSearchDecoder(cell=decoder_cell,embedding=embeddings,
+                                                start_tokens=tf.tile([GO_ID], [1]),
                                                 end_token=EOS_ID,
-                                                initial_state=init_state,
-                                                beam_width=2)
+                                                initial_state=encoder_state[-1],
+                                                beam_width=1)
+            final_outputs, final_state, final_sequence_lengths =\
+                            seq2seq.dynamic_decode(decoder=decoder)
+            self.logits = final_outputs.predicted_ids
         else:
             helper = seq2seq.TrainingHelper(inputs=targets_embedding,
                                             sequence_length=self.target_lengths)
@@ -108,11 +116,10 @@ class ChatbotModel(object):
                                            helper=helper,
                                            initial_state=init_state,
                                            output_layer=Dense(vocab_size))
-
-        final_outputs, final_state, final_sequence_lengths =\
+            final_outputs, final_state, final_sequence_lengths =\
                             seq2seq.dynamic_decode(decoder=decoder)
 
-        self.logits = final_outputs.rnn_output
+            self.logits = final_outputs.rnn_output
 
         if not decoder_mode:
             with tf.variable_scope("loss") as scope:
@@ -157,11 +164,25 @@ class ChatbotModel(object):
                      self.decoder_targets : targets,
                      self.target_lengths : target_lengths})
         return loss
+    
+    def test(self, sess, inputs,
+             targets, source_lengths,
+             target_lengths):
+        
+        logits=sess.run([self.logits],
+                    {self.encoder_inputs : inputs,
+                     self.source_lengths : source_lengths,
+                     self.decoder_targets : targets,
+                     self.target_lengths : target_lengths})
+         
+        return logits
+    
 
     def get_batch(self, dataset):
         '''
         Obtains batch from dataset
         Inputs: dataset - list of [input, target] sentence pairs
+
         Outputs:
         source_batch_major- [batch_size x max_sequence_length] inputs
         target_batch_major- [batch_size x max_sequence_length] targets

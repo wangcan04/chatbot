@@ -92,7 +92,7 @@ class ChatbotModel(object):
             attn_cell=seq2seq.AttentionWrapper(
                       cell=decoder_cell, #same as encoder
                       attention_mechanism=attn_mech,
-                      attention_size=hidden_size, #depth of attention ( output ) tensor
+                      attention_layer_size=hidden_size, #depth of attention ( output ) tensor
                       output_attention=False,
                       name='attention_wrapper'
                       )

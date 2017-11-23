@@ -69,7 +69,7 @@ class ChatbotModel(object):
                                                                inputs=encoder_inputs_embedded,
                                                                dtype=tf.float32,
                                                                time_major=False)
-
+            encoder_outputs = tf.concat(encoder_outputs,2)
         with tf.variable_scope('decoder') as scope:
             decoder_cell = rnn.LSTMCell(hidden_size)
             decoder_cell = rnn.DropoutWrapper(decoder_cell,

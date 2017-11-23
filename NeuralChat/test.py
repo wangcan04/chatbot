@@ -66,7 +66,7 @@ def main():
 
                         #TODO implement beam search
                         #outputs = outputs[:outputs.index(5)]
-                        print (output_logits)
+                        print (output_logits) # ids of output words sequence
                         convo_output=" ".join(vocab.indices_2_tokens(output_logits))
                         conversation_history.append(convo_output)
                         print(convo_output)

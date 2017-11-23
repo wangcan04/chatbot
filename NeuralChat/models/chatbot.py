@@ -94,10 +94,11 @@ class ChatbotModel(object):
             init_state=attn_zero.clone(cell_state=encoder_state)
 
         if decoder_mode:
-            decoder = seq2seq.BeamSearchDecoder(embedding=embeddings,
+            decoder = seq2seq.BeamSearchDecoder(cell=attn_cell,
+                                                embedding=embeddings,
                                                 start_tokens=tf.tile([GOD_ID], [batch_size]),
                                                 end_token=EOS_ID,
-                                                initial_state=encoder_state[0],
+                                                initial_state=init_state,
                                                 beam_width=2)
         else:
             helper = seq2seq.TrainingHelper(inputs=targets_embedding,

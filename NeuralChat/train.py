@@ -107,7 +107,7 @@ def main():
 				# show statistics for the previous epoch.
 				print("Step {0} learning rate {1} step-time {2} training loss {3}"\
 				.format(model.global_step.eval(), round(model.learning_rate,4),
-						 round(step_time, 4), round(train_loss,4)))
+						 round(step_time, 4), round(train_loss,4)))# loss change record
 				# Decrease learning rate if no improvement was seen over last 3 times.
 				#if len(previous_losses) > 2 and loss > max(previous_losses[-3:]):
 				#	sess.run(model.learning_rate_decay_op)

@@ -75,8 +75,23 @@ class ChatbotModel(object):
                                               input_keep_prob=dropout)
 
             decoder_cell = rnn.MultiRNNCell([decoder_cell] * num_layers)
-
-            #attention_mechanism=seq2seq.BahdanauAttention(num_units=hidden_size,memory=encoder_outputs)
+            attn_mech=seq2seq.BahdanauAttention(
+                      num_units=hidden_size,#depth of query mechanism
+                      memory=encoder_outputs, #out of RNN hidden states
+                      memory_sequence_length=None,
+                      Normalize=False,
+                      name='BahdanauAttentiion'
+                      )
+            attn_cell=seq2seq.DynamicAttentionWrapper(
+                      cell=cell, #same as encoder
+                      attention_mechanism=attn_mech,
+                      attention_size=embedding_dim, #depth of attention ( output ) tensor
+                      output_attention=False,
+                      name='attention_wrapper'
+                      )
+            batch_size=tf.shape(encoder_outputs)[0]
+            attn_zero=attn_cell.zero_state(batch_size=batch_size,dtype=tf.float32)
+            init_state=attn_zero.clone(cell_state=encoder_state)
 
         if decoder_mode:
             decoder = seq2seq.BeamSearchDecoder(embedding=embeddings,
@@ -88,9 +103,9 @@ class ChatbotModel(object):
             helper = seq2seq.TrainingHelper(inputs=targets_embedding,
                                             sequence_length=self.target_lengths)
 
-            decoder = seq2seq.BasicDecoder(cell=decoder_cell,
+            decoder = seq2seq.BasicDecoder(cell=attn_cell,
                                            helper=helper,
-                                           initial_state=encoder_state[-1],
+                                           initial_state=init_state,
                                            output_layer=Dense(vocab_size))
 
         final_outputs, final_state, final_sequence_lengths =\

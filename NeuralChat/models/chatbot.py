@@ -100,7 +100,7 @@ class ChatbotModel(object):
             batch_size=tf.shape(encoder_outputs)[0]
             attn_zero=attn_cell.zero_state(batch_size=batch_size*beam_width,tf.float32)
             init_state=attn_zero.clone(cell_state=encoder_state)
-            decoder = seq2seq.BeamSearchDecoder(cell=decoder_cell,embedding=embeddings,
+            decoder = seq2seq.BeamSearchDecoder(cell=attn_cell,embedding=embeddings,
                                                 start_tokens=tf.tile([GO_ID], [1]),
                                                 end_token=EOS_ID,
                                                 initial_state=init_state,

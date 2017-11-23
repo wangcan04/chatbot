@@ -85,14 +85,14 @@ class ChatbotModel(object):
             attn_mech=seq2seq.BahdanauAttention(
                       num_units=hidden_size,#depth of query mechanism
                       memory=encoder_outputs, #out of RNN hidden states
-                      memory_sequence_length=None,
+                      memory_sequence_length=self.source_lengths,
                       normalize=False,
                       name='BahdanauAttentiion'
                       )
             attn_cell=seq2seq.AttentionWrapper(
                       cell=decoder_cell, #same as encoder
                       attention_mechanism=attn_mech,
-                      attention_layer_size=hidden_size, #depth of attention tensor
+                      attention_layer_size=0, #depth of attention tensor
                       output_attention=False,
                       name='attention_wrapper'
                       )#attention layer
@@ -119,7 +119,7 @@ class ChatbotModel(object):
             
             decoder = seq2seq.BasicDecoder(cell=attn_cell,
                                            helper=helper,
-                                           initial_state=attn_cell.zero_state(batch_size,tf.float32).clone(cell_state=encoder_state[0]),
+                                           initial_state=attn_cell.zero_state(batch_size,tf.float32).clone(cell_state=encoder_state[-1]),
                                            output_layer=Dense(vocab_size))
             final_outputs, final_state, final_sequence_lengths =\
                             seq2seq.dynamic_decode(decoder=decoder)

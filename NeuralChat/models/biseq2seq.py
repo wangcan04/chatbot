@@ -73,8 +73,6 @@ class ChatbotModel(object):
             decoder_cell = rnn.MultiRNNCell([decoder_cell] * num_layers,state_is_tuple=True)
         if decoder_mode:
             beam_width=2
-
-            '''
             decoder = seq2seq.BeamSearchDecoder(embedding=embeddings,
                                                 start_tokens=tf.tile([GOD_ID], [batch_size]),
                                                 end_token=EOS_ID,

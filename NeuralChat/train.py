@@ -1,3 +1,7 @@
+'''
+This is a chatbot based on seq2seq architecture.
+
+'''
 import math
 import os
 import random
@@ -17,13 +21,13 @@ FLAGS = flags.FLAGS
 flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
 flags.DEFINE_float("lr_decay_factor", 0.97, "Learning rate decays by this much.")
 flags.DEFINE_float("grad_clip", 5.0, "Clip gradients to this norm.")
-flags.DEFINE_float("train_frac", 0.9, "Percentage of data to use for \
-  training (rest goes into test set)")
+flags.DEFINE_float("train_frac", 0.7, "Percentage of data to use for \
+	training (rest goes into test set)")
 flags.DEFINE_integer("batch_size", 100, "Batch size to use during training.")
-flags.DEFINE_integer("max_epoch", 300, "Maximum number of times to go over training set")
-flags.DEFINE_integer("hidden_size", 1024, "Size of each model layer.")
-flags.DEFINE_integer("num_layers", 2, "Number of layers in the model.")
-flags.DEFINE_integer("vocab_size", 100000, "Max vocabulary size.")
+flags.DEFINE_integer("max_epoch", 6, "Maximum number of times to go over training set")
+flags.DEFINE_integer("hidden_size", 50, "Size of each model layer.")
+flags.DEFINE_integer("num_layers", 3, "Number of layers in the model.")
+flags.DEFINE_integer("vocab_size", 10000, "Max vocabulary size.")
 flags.DEFINE_integer("dropout", 0.8, "Probability of hidden inputs being removed between 0 and 1.")
 flags.DEFINE_string("data_dir", "data/", "Directory containing processed data.")
 flags.DEFINE_string("raw_data_dir", "data/cornell_lines/", "Raw text data directory")
@@ -31,9 +35,9 @@ flags.DEFINE_string("raw_data_dir", "data/cornell_lines/", "Raw text data direct
 flags.DEFINE_string("tokenizer", "basic", "Choice of tokenizer, options are: basic (for now)")
 flags.DEFINE_string("checkpoint_dir", "data/checkpoints/", "Checkpoint dir")
 flags.DEFINE_integer("max_train_data_size", 0,
-  "Limit on the size of training data (0: no limit).")
-flags.DEFINE_integer("steps_per_checkpoint", 800,
-  "How many training steps to do per checkpoint.")
+	"Limit on the size of training data (0: no limit).")
+flags.DEFINE_integer("steps_per_checkpoint", 200,
+	"How many training steps to do per checkpoint.")
 flags.DEFINE_integer("max_target_length", 50, "max length of target response")
 flags.DEFINE_integer("max_source_length", 75, "max length of source input")
 flags.DEFINE_integer("convo_limits", 1, "how far back the conversation memory should be")
@@ -107,7 +111,7 @@ def main():
 				# show statistics for the previous epoch.
 				print("Step {0} learning rate {1} step-time {2} training loss {3}"\
 				.format(model.global_step.eval(), round(model.learning_rate,4),
-						 round(step_time, 4), round(train_loss,4)))# loss change record
+						 round(step_time, 4), round(train_loss,4)))
 				# Decrease learning rate if no improvement was seen over last 3 times.
 				#if len(previous_losses) > 2 and loss > max(previous_losses[-3:]):
 				#	sess.run(model.learning_rate_decay_op)
@@ -169,6 +173,25 @@ def read_data(source_path, target_path, max_size=None):
 	'''
 	This method directly from tensorflow translation example
 	'''
+	'''
+	data_set = []
+	with tf.gfile.GFile(source_path, mode="rb") as source_file:
+		with tf.gfile.GFile(target_path, mode="rb") as target_file:
+			source, target = source_file.readline(), target_file.readline()
+			counter = 0
+			while source and target and counter < max_size:
+				if counter % 100000 == 0:
+					print("Reading data line {0}".format(counter))
+					sys.stdout.flush()
+				source_ids = [int(x) for x in source.split()]
+				target_ids = [vocab_utils.GO_ID]
+				if len(source_ids)>0 and len(target_ids)>0:
+				   target_ids.extend([int(x) for x in target.split()])
+				   target_ids.append(vocab_utils.EOS_ID)
+				   data_set.append([source_ids, target_ids])
+				   counter += 1
+				source, target = source_file.readline(), target_file.readline()
+    '''
 	data_set = []
 	with tf.gfile.GFile(source_path, mode="rb") as source_file:
 		with tf.gfile.GFile(target_path, mode="rb") as target_file:
@@ -183,7 +206,8 @@ def read_data(source_path, target_path, max_size=None):
 				target_ids = [vocab_utils.GO_ID]
 				target_ids.extend([int(x) for x in target.split()])
 				target_ids.append(vocab_utils.EOS_ID)
-				data_set.append([source_ids, target_ids])
+				if len(source_ids)>0 and len(target_ids)>0:
+					data_set.append([source_ids, target_ids])
 				source, target = source_file.readline(), target_file.readline()
 	return data_set
 
